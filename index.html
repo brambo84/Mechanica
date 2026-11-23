@@ -151,10 +151,6 @@ function figBeam(L,items,dims,pivot){
 /* ===== Vragenbank ===== */
 const BANK = {
 N:[
- ()=>mc('Wat is een <b>star lichaam</b>?',
-   'Een lichaam dat niet vervormt: de afstand tussen twee punten van het lichaam blijft altijd gelijk',
-   ['Een lichaam dat niet kan bewegen','Een lichaam dat na het wegnemen van de kracht terug zijn oorspronkelijke vorm aanneemt','Een lichaam waarop geen krachten werken'],
-   'Een star lichaam vervormt niet, hoe groot de krachten ook zijn. Een lichaam dat na het wegnemen van de kracht terug zijn vorm aanneemt, is elastisch vervormbaar.'),
  ()=>mc('Wat zegt de <b>eerste wet van Newton</b> (traagheidswet)?',
    'Als de resulterende kracht op een lichaam nul is, blijft het in rust of beweegt het eenparig rechtlijnig verder',
    ['Een lichaam waarop geen kracht werkt, komt vanzelf tot stilstand','De versnelling is recht evenredig met de resulterende kracht','Op elke actie volgt een even grote, tegengestelde reactie'],
@@ -238,11 +234,8 @@ S:[
      arr(o[0],o[1],...pt(0,95),'var(--f1)','F₁')+arr(o[0],o[1],...pt(90,75),'var(--f2)','F₂')+arr(o[0],o[1],...pt(th,85),'var(--f3)','F₃')+arc(o[0],o[1],26,0,th,th+'°')+dot(...o));
    return num(`Drie krachten grijpen aan in hetzelfde punt:<br>F₁ = ${a} N langs de positieve x-as,<br>F₂ = ${b} N langs de positieve y-as,<br>F₃ = ${c} N onder een hoek van ${th}° met de positieve x-as (tegenwijzerzin gemeten).<br>Bereken de grootte van de resultante.`,
      R,'N',`ΣFx = ${a} + ${c}·cos ${th}° = ${f(Rx)} N<br>ΣFy = ${b} + ${c}·sin ${th}° = ${f(Ry)} N<br>R = √(ΣFx² + ΣFy²) = ${f(R)} N`, fig); },
- ()=>tf('Je mag aan een star lichaam twee even grote, tegengestelde krachten met dezelfde werklijn toevoegen, zonder dat de uitwerking van de krachten verandert.', true,
-   'Waar. Twee even grote, tegengestelde krachten op dezelfde werklijn hebben samen een resultante nul. Ze veranderen niets aan de werking op een star lichaam.'),
- ()=>mc('Bij welk soort lichaam mag je een kracht langs haar werklijn verplaatsen zonder dat de uitwerking verandert?',
-   'Bij een star lichaam', ['Bij een vervormbaar lichaam','Bij elk lichaam','Bij geen enkel lichaam'],
-   'Bij een star lichaam maakt het aangrijpingspunt op de werklijn niet uit. Bij een vervormbaar lichaam wel: trekken of duwen aan een spons geeft een andere vervorming.'),
+ ()=>tf('Als je twee even grote, tegengestelde krachten met dezelfde werklijn toevoegt, verandert de resultante niet.', true,
+   'Waar. Twee even grote, tegengestelde krachten op dezelfde werklijn hebben samen een resultante nul. Ze veranderen dus niets aan de resultante.'),
  ()=>{ const a=rnd(20,80,10), b=rnd(a+20,150,10), mn=b-a, mx=a+b, mid=Math.round((mn+mx)/20)*10, bad=pick([mn-10,mx+10]);
    return mc(`Twee krachten van ${a} N en ${b} N grijpen aan in hetzelfde punt. De hoek ertussen kan je vrij kiezen. Welke waarde kan de resultante <b>niet</b> hebben?`,
      `${bad} N`, [`${mn} N`,`${mid} N`,`${mx} N`],
