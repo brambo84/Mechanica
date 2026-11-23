@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Proefexamen Mechanica</title>
+<style>
+:root{--bg:#f6f3ec;--card:#fff;--ink:#1f2328;--muted:#5d646e;--line:#e4ded2;--acc:#c0760f;--acc-ink:#fff;--soft:#fbf1e1;
+--ok:#1d7a46;--okbg:#e7f4ec;--bad:#b42318;--badbg:#fdecea;--f1:#c0760f;--f2:#2563a8;--f3:#7a3fa0;--fr:#b42318}
+@media (prefers-color-scheme:dark){:root{--bg:#16171a;--card:#212328;--ink:#ecebe7;--muted:#a3a7ae;--line:#35383e;--acc:#e8a03c;--acc-ink:#1a1a1a;--soft:#2d2619;
+--ok:#4cc38a;--okbg:#16342a;--bad:#f2786c;--badbg:#3b1d1b;--f1:#e8a03c;--f2:#6ea8ef;--f3:#c58fe4;--fr:#f2786c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px}
+header h1{font-size:1.15rem;margin:0}
+header span{color:var(--muted);font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+h2{margin:0 0 8px;font-size:1.4rem}
+p{margin:.4em 0 .8em}
+.muted{color:var(--muted)}
+ul.topics{margin:.3em 0 1em;padding-left:1.2em}
+label.f{display:block;font-weight:600;margin:14px 0 6px}
+input[type=text],input[inputmode]{font:inherit;width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+input:focus{outline:none;border-color:var(--acc)}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px}
+button.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:600}
+button:disabled{opacity:.4;cursor:default}
+.row{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:18px;flex-wrap:wrap}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:14px}
+.bar i{display:block;height:100%;background:var(--acc);transition:width .2s}
+.tag{display:inline-block;font-size:.78rem;font-weight:600;color:var(--acc);background:var(--soft);padding:2px 9px;border-radius:99px;margin-bottom:8px}
+.qtext{font-size:1.05rem}
+.choices{display:grid;gap:8px;margin-top:12px}
+.choice{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;padding:12px}
+.choice .k{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.8rem;font-weight:700}
+.choice.sel{border-color:var(--acc);background:var(--soft)}
+.choice.sel .k{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.numrow{display:flex;align-items:center;gap:10px;margin-top:12px}
+.numrow input{max-width:220px}
+.numrow b{font-size:1.05rem}
+svg.fig{display:block;width:100%;max-width:420px;height:auto;margin:10px auto 4px}
+svg.fig text{font:600 13px system-ui,sans-serif}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.dots button{width:34px;height:34px;padding:0;font-size:.8rem;border-radius:8px}
+.dots button.ans{background:var(--soft);border-color:var(--acc)}
+.dots button.cur{outline:2px solid var(--acc);outline-offset:1px}
+.score{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.ring{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;font-size:1.7rem;font-weight:700}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px}
+.tbl td{padding:6px 0;border-bottom:1px solid var(--line)}
+.tbl td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.rev{border-left:4px solid var(--line);margin-top:14px}
+.rev.ok{border-left-color:var(--ok)}
+.rev.bad{border-left-color:var(--bad)}
+.verd{font-weight:700}
+.ok .verd{color:var(--ok)}
+.bad .verd{color:var(--bad)}
+.ans{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:.95rem}
+.ans.mine{background:var(--bg)}
+.rev.ok .ans.mine{background:var(--okbg)}
+.rev.bad .ans.mine{background:var(--badbg)}
+.ans.right{background:var(--okbg)}
+.uitleg{margin-top:10px;font-size:.93rem;color:var(--muted)}
+.hist{font-size:.9rem;margin-top:10px}
+.hidden{display:none}
+.small{font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Proefexamen Mechanica</h1><span>4 EMT</span></header>
+  <main id="app"></main>
+</div>
+<script>
+'use strict';
+/* ===== Instellingen ===== */
+const NTFY_TOPIC = 'mech4emt-v7kq29xr4d';      // uitslagen gaan naar https://ntfy.sh/<topic>
+const QUOTA = {N:6, S:6, O:3, M:5};             // aantal vragen per onderdeel (20 in totaal)
+const TOPICS = {N:'Wetten van Newton', S:'Krachten samenstellen', O:'Krachten ontbinden', M:'Moment en Varignon'};
+const g = 9.81;
+
+/* ===== Hulpfuncties ===== */
+const rnd = (a,b,s=1) => +(a + s*Math.floor(Math.random()*(Math.round((b-a)/s)+1))).toFixed(6);
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const f = (x,d=2) => (Math.round(x*10**d)/10**d).toLocaleString('nl-BE',{maximumFractionDigits:d,useGrouping:false});
+const rad = d => d*Math.PI/180;
+const deg = r => r*180/Math.PI;
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function num(text, answer, unit, uitleg, svg){ return {type:'num', text, answer, unit, uitleg, svg}; }
+function mc(text, correct, wrong, uitleg, svg){ const ch=shuffle([correct,...wrong]); return {type:'mc', text, choices:ch, correct:ch.indexOf(correct), uitleg, svg}; }
+function tf(text, truth, uitleg){ return {type:'mc', text:'<b>Waar of onwaar?</b> '+text, choices:['Waar','Onwaar'], correct:truth?0:1, uitleg}; }
+
+/* ===== Figuren (SVG) ===== */
+const svgW = (w,h,inner) => `<svg class="fig" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+function arr(x1,y1,x2,y2,col,lab,dash){
+  const a=Math.atan2(y2-y1,x2-x1), h=11;
+  const p1=[x2-h*Math.cos(a-.38), y2-h*Math.sin(a-.38)], p2=[x2-h*Math.cos(a+.38), y2-h*Math.sin(a+.38)];
+  const ex=x2-8*Math.cos(a), ey=y2-8*Math.sin(a);
+  let s=`<line x1="${x1}" y1="${y1}" x2="${ex}" y2="${ey}" stroke="${col}" stroke-width="2.6" ${dash?'stroke-dasharray="6 4"':''}/>`+
+        `<polygon points="${x2},${y2} ${p1.join(',')} ${p2.join(',')}" fill="${col}"/>`;
+  if(lab) s+=`<text x="${x2+17*Math.cos(a)}" y="${y2+17*Math.sin(a)+5}" fill="${col}" text-anchor="middle">${lab}</text>`;
+  return s;
+}
+function arc(cx,cy,r,a0,a1,lab){
+  const s=[cx+r*Math.cos(rad(a0)),cy-r*Math.sin(rad(a0))], e=[cx+r*Math.cos(rad(a1)),cy-r*Math.sin(rad(a1))], m=rad((a0+a1)/2);
+  return `<path d="M${s[0]} ${s[1]} A${r} ${r} 0 0 0 ${e[0]} ${e[1]}" fill="none" stroke="var(--muted)" stroke-width="1.4"/>`+
+    (lab?`<text x="${cx+(r+16)*Math.cos(m)}" y="${cy-(r+16)*Math.sin(m)+5}" fill="var(--muted)" text-anchor="middle">${lab}</text>`:'');
+}
+const dot = (x,y) => `<circle cx="${x}" cy="${y}" r="4" fill="var(--ink)"/>`;
+function figAngle(al,l1,l2){
+  const o=[150,150], r=rad(al), e=[o[0]+115*Math.cos(r), o[1]-115*Math.sin(r)];
+  return svgW(330,180, arr(o[0],o[1],o[0]+140,o[1],'var(--f1)',l1)+arr(o[0],o[1],e[0],e[1],'var(--f2)',l2)+arc(o[0],o[1],34,0,al,al+'°')+dot(...o));
+}
+function figForce(al,lab){
+  const o=[70,160], r=rad(al), e=[o[0]+170*Math.cos(r), o[1]-170*Math.sin(r)];
+  return svgW(330,190,
+    `<line x1="20" y1="${o[1]}" x2="310" y2="${o[1]}" stroke="var(--muted)" stroke-dasharray="3 4"/><text x="314" y="${o[1]+4}" fill="var(--muted)">x</text>`+
+    `<line x1="${o[0]}" y1="180" x2="${o[0]}" y2="10" stroke="var(--muted)" stroke-dasharray="3 4"/><text x="${o[0]-4}" y="10" fill="var(--muted)" text-anchor="end">y</text>`+
+    `<line x1="${e[0]}" y1="${e[1]}" x2="${e[0]}" y2="${o[1]}" stroke="var(--muted)" stroke-dasharray="2 3"/><line x1="${e[0]}" y1="${e[1]}" x2="${o[0]}" y2="${e[1]}" stroke="var(--muted)" stroke-dasharray="2 3"/>`+
+    arr(o[0],o[1],e[0],e[1],'var(--f1)',lab)+arc(o[0],o[1],40,0,al,al+'°')+dot(...o));
+}
+function figLever(al,llab,flab){
+  const p=[40,125], end=[250,125], r=rad(al), t=[end[0]+80*Math.cos(r), end[1]-80*Math.sin(r)];
+  return svgW(340,190,
+    `<polygon points="${p[0]},${p[1]} ${p[0]-12},${p[1]+20} ${p[0]+12},${p[1]+20}" fill="none" stroke="var(--muted)" stroke-width="1.6"/>`+
+    `<line x1="${p[0]}" y1="${p[1]}" x2="${end[0]}" y2="${end[1]}" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/>`+
+    `<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/><text x="${p[0]}" y="${p[1]-14}" text-anchor="middle" fill="var(--muted)">O</text>`+
+    `<line x1="${p[0]}" y1="170" x2="${end[0]}" y2="170" stroke="var(--muted)"/><text x="${(p[0]+end[0])/2}" y="165" text-anchor="middle" fill="var(--muted)">${llab}</text>`+
+    `<line x1="${end[0]}" y1="${end[1]}" x2="${end[0]+60}" y2="${end[1]}" stroke="var(--muted)" stroke-dasharray="3 4"/>`+
+    arr(end[0],end[1],t[0],t[1],'var(--f1)',flab)+arc(end[0],end[1],28,0,al,al+'°'));
+}
+/* balk: items [{x, dir:'down'|'up', lab, col, dash}], dims [[x1,x2,tekst,niveau]], pivot x of null */
+function figBeam(L,items,dims,pivot){
+  const X=v=>40+v/L*260; let s=`<rect x="34" y="92" width="272" height="12" rx="3" fill="var(--line)" stroke="var(--muted)"/>`;
+  if(pivot!=null) s+=`<polygon points="${X(pivot)},104 ${X(pivot)-12},126 ${X(pivot)+12},126" fill="none" stroke="var(--muted)" stroke-width="1.6"/>`;
+  for(const it of items){
+    if(it.dir==='down') s+=arr(X(it.x),22,X(it.x),90,it.col,'',it.dash)+`<text x="${X(it.x)}" y="16" text-anchor="middle" fill="${it.col}">${it.lab}</text>`;
+    else s+=arr(X(it.x),150,X(it.x),106,it.col,'',it.dash)+`<text x="${X(it.x)}" y="166" text-anchor="middle" fill="${it.col}">${it.lab}</text>`;
+  }
+  const base=items.some(it=>it.dir==='up')?178:(pivot!=null?148:132);
+  for(const [a,b,t,lv] of dims){ const y=base+(lv||0)*20;
+    s+=`<line x1="${X(a)}" y1="${y}" x2="${X(b)}" y2="${y}" stroke="var(--muted)"/><line x1="${X(a)}" y1="${y-5}" x2="${X(a)}" y2="${y+5}" stroke="var(--muted)"/><line x1="${X(b)}" y1="${y-5}" x2="${X(b)}" y2="${y+5}" stroke="var(--muted)"/>`+
+       `<text x="${(X(a)+X(b))/2}" y="${y-5}" text-anchor="middle" fill="var(--muted)">${t}</text>`; }
+  const h=Math.max(...dims.map(d=>base+(d[3]||0)*20))+14;
+  return svgW(340,h,s);
+}
+
+/* ===== Vragenbank ===== */
+const BANK = {
+N:[
+ ()=>mc('Wat is een <b>star lichaam</b>?',
+   'Een lichaam dat niet vervormt: de afstand tussen twee punten van het lichaam blijft altijd gelijk',
+   ['Een lichaam dat niet kan bewegen','Een lichaam dat na het wegnemen van de kracht terug zijn oorspronkelijke vorm aanneemt','Een lichaam waarop geen krachten werken'],
+   'Een star lichaam vervormt niet, hoe groot de krachten ook zijn. Een lichaam dat na het wegnemen van de kracht terug zijn vorm aanneemt, is elastisch vervormbaar.'),
+ ()=>mc('Wat zegt de <b>eerste wet van Newton</b> (traagheidswet)?',
+   'Als de resulterende kracht op een lichaam nul is, blijft het in rust of beweegt het eenparig rechtlijnig verder',
+   ['Een lichaam waarop geen kracht werkt, komt vanzelf tot stilstand','De versnelling is recht evenredig met de resulterende kracht','Op elke actie volgt een even grote, tegengestelde reactie'],
+   'Traagheidswet: zonder resulterende kracht verandert de bewegingstoestand niet. Een lichaam in rust blijft in rust, een bewegend lichaam behoudt snelheid en richting.'),
+ ()=>{ const s=pick([
+     ['Bij een noodstop van een bus schuiven de passagiers naar voren.',0],
+     ['Je trekt met een snelle ruk een tafelkleed weg en de borden blijven staan.',0],
+     ['Een lege winkelkar versnelt sneller dan een volle als je even hard duwt.',1],
+     ['Om een vrachtwagen even snel te laten optrekken als een auto, is een veel grotere kracht nodig.',1],
+     ['Een geweer slaat terug naar achteren wanneer de kogel vertrekt.',2],
+     ['Een zwemmer duwt het water naar achteren en gaat zelf vooruit.',2]]);
+   const W=['de eerste wet (traagheidswet)','de tweede wet (F = m · a)','de derde wet (actie = −reactie)'];
+   return mc(s[0]+'<br>Welke wet van Newton verklaart dit het best?', 'De '+W[s[1]].replace('de ',''), W.filter((_,i)=>i!==s[1]).map(w=>'De '+w.replace('de ','')),
+     ['Traagheid: het lichaam wil zijn bewegingstoestand behouden.','Bij dezelfde kracht hangt de versnelling af van de massa: a = F / m.','Krachten komen altijd in paren voor: werkt A op B, dan werkt B even hard terug op A.'][s[1]]); },
+ ()=>{ const m=pick([2,5,8,12,25,40,750,1200,1500]), a=pick([0.5,1.5,2,2.5,3,4,6]);
+   return num(`Een voorwerp met een massa van ${f(m)} kg krijgt een versnelling van ${f(a)} m/s². Hoe groot is de resulterende kracht op het voorwerp?`,
+     m*a,'N',`F = m · a = ${f(m)} kg · ${f(a)} m/s² = ${f(m*a)} N`); },
+ ()=>{ const F=rnd(20,600,10), m=pick([4,5,8,10,16,20,25,50]);
+   return num(`Op een kist van ${m} kg werkt een resulterende kracht van ${F} N. Welke versnelling krijgt de kist?`,
+     F/m,'m/s²',`a = F / m = ${F} N / ${m} kg = ${f(F/m)} m/s²`); },
+ ()=>{ const m=pick([0.5,2,5,12,25,65,80,250]);
+   return num(`Bereken het gewicht van een voorwerp met een massa van ${f(m)} kg (g = 9,81 m/s²).`,
+     m*g,'N',`G = m · g = ${f(m)} kg · 9,81 m/s² = ${f(m*g)} N`); },
+ ()=>{ const G=rnd(100,2500,50);
+   return num(`Een voorwerp heeft een gewicht van ${G} N. Wat is de massa van het voorwerp (g = 9,81 m/s²)?`,
+     G/g,'kg',`m = G / g = ${G} N / 9,81 m/s² = ${f(G/g)} kg`); },
+ ()=>mc('Een boek ligt op een tafel. De aarde trekt het boek naar beneden (zwaartekracht). Wat is volgens de derde wet van Newton de <b>reactiekracht</b> van die zwaartekracht?',
+   'De kracht waarmee het boek aan de aarde trekt',
+   ['De kracht waarmee de tafel het boek omhoog duwt','De kracht waarmee het boek op de tafel drukt','Er is geen reactiekracht, want het boek ligt stil'],
+   'Actie en reactie werken tussen dezelfde twee lichamen: de aarde trekt aan het boek, dus het boek trekt even hard aan de aarde. De kracht van de tafel is een andere kracht (een ander krachtenpaar).'),
+ ()=>tf('Actie en reactie heffen elkaar op, omdat ze even groot en tegengesteld zijn.', false,
+   'Onwaar. Actie en reactie werken op twee <i>verschillende</i> lichamen. Krachten op verschillende lichamen kunnen elkaar niet opheffen.'),
+ ()=>{ const m=rnd(800,1600,100), Fm=rnd(2000,5000,100), Fw=rnd(300,1500,50);
+   return num(`Een auto met een massa van ${m} kg wordt aangedreven met een trekkracht van ${Fm} N. De totale wrijvingskracht bedraagt ${Fw} N. Bereken de versnelling van de auto.`,
+     (Fm-Fw)/m,'m/s²',`Resulterende kracht: F = ${Fm} N − ${Fw} N = ${Fm-Fw} N<br>a = F / m = ${Fm-Fw} N / ${m} kg = ${f((Fm-Fw)/m)} m/s²`); },
+ ()=>{ const m=rnd(2,20), F=rnd(10,100,5), t=rnd(2,8);
+   return num(`Een voorwerp van ${m} kg ligt stil op een wrijvingsloos oppervlak. Gedurende ${t} s werkt er een constante kracht van ${F} N op. Welke snelheid heeft het voorwerp na die ${t} s?`,
+     F/m*t,'m/s',`a = F / m = ${F} / ${m} = ${f(F/m,3)} m/s²<br>v = a · t = ${f(F/m,3)} · ${t} = ${f(F/m*t)} m/s`); },
+ ()=>mc('Een astronaut neemt een gereedschapskist mee naar de maan. Wat geldt er op de maan in vergelijking met op aarde?',
+   'De massa blijft gelijk, het gewicht wordt kleiner',
+   ['De massa en het gewicht worden allebei kleiner','De massa wordt kleiner, het gewicht blijft gelijk','De massa en het gewicht blijven allebei gelijk'],
+   'De massa (in kg) is een eigenschap van het voorwerp en verandert niet. Het gewicht G = m · g hangt af van g, en g is op de maan veel kleiner (± 1,6 m/s²).'),
+ ()=>tf('Als een voorwerp met constante snelheid rechtdoor beweegt, werkt er geen enkele kracht op.', false,
+   'Onwaar. Er kunnen wel krachten werken, maar hun <i>resultante</i> is nul (bv. trekkracht = wrijving). Dat volgt uit de traagheidswet.'),
+ ()=>tf('Hoe groter de massa van een lichaam, hoe groter zijn traagheid.', true,
+   'Waar. De massa is een maat voor de traagheid: hoe zwaarder, hoe moeilijker de bewegingstoestand te veranderen.'),
+ ()=>{ const v=pick([['de resulterende kracht verdubbelt en de massa gelijk blijft','wordt 2 keer zo groot','a = F / m: F × 2 → a × 2'],
+                     ['de massa verdubbelt en de resulterende kracht gelijk blijft','wordt 2 keer zo klein','a = F / m: m × 2 → a ÷ 2'],
+                     ['zowel de resulterende kracht als de massa verdubbelen','blijft gelijk','a = F / m: (2F) / (2m) = F / m']]);
+   return mc(`Wat gebeurt er met de versnelling van een lichaam als ${v[0]}?`, v[1],
+     ['wordt 2 keer zo groot','wordt 2 keer zo klein','blijft gelijk','wordt 4 keer zo groot'].filter(x=>x!==v[1]), v[2]); },
+ ()=>mc('Waaraan is 1 newton (1 N) gelijk?', '1 kg · m/s²', ['1 kg · m/s','1 kg / m²','1 kg · 9,81 m'],
+   'Uit F = m · a volgt: 1 N = 1 kg · 1 m/s². Dat is de kracht die aan 1 kg een versnelling van 1 m/s² geeft.'),
+],
+S:[
+ ()=>mc('Welke kenmerken bepalen een kracht volledig?', 'Aangrijpingspunt, richting (werklijn), zin en grootte',
+   ['Massa, snelheid, richting en grootte','Aangrijpingspunt, massa, zin en versnelling','Grootte, eenheid, richting en tijdsduur'],
+   'Een kracht is een vector: je tekent ze met een pijl die het aangrijpingspunt, de richting (werklijn), de zin en de grootte toont.'),
+ ()=>{ const a=rnd(20,200,10), b=rnd(20,200,10), c=rnd(20,a+b-10,10), R=a+b-c;
+   return num(`Op dezelfde werklijn werken drie krachten: F₁ = ${a} N naar rechts, F₂ = ${b} N naar rechts en F₃ = ${c} N naar links. Hoe groot is de resultante?`,
+     R,'N',`Neem rechts positief: R = ${a} + ${b} − ${c} = ${R} N (naar rechts).`); },
+ ()=>{ let a=rnd(30,300,10), b=rnd(30,300,10); while(a===b) b=rnd(30,300,10);
+   const d=Math.abs(a-b), z=a>b?'rechts':'links', nz=a>b?'links':'rechts';
+   return mc(`Twee krachten werken op dezelfde werklijn: F₁ = ${a} N naar rechts en F₂ = ${b} N naar links. Wat is de resultante?`,
+     `${d} N naar ${z}`, [`${d} N naar ${nz}`,`${a+b} N naar ${z}`,`${a+b} N naar ${nz}`],
+     `Tegengestelde krachten op dezelfde werklijn: R = verschil = ${Math.max(a,b)} − ${Math.min(a,b)} = ${d} N, met de zin van de grootste kracht (naar ${z}).`); },
+ ()=>{ const a=rnd(30,300,10), b=rnd(30,300,10), R=Math.hypot(a,b);
+   return num(`Twee krachten F₁ = ${a} N en F₂ = ${b} N grijpen aan in hetzelfde punt en staan loodrecht op elkaar. Bereken de grootte van de resultante.`,
+     R,'N',`Loodrecht ⇒ stelling van Pythagoras:<br>R = √(F₁² + F₂²) = √(${a}² + ${b}²) = ${f(R)} N`, figAngle(90,'F₁','F₂')); },
+ ()=>{ const a=rnd(20,200,10), b=rnd(20,200,10), al=pick([30,45,60,75,105,120,135,150]);
+   const R=Math.sqrt(a*a+b*b+2*a*b*Math.cos(rad(al)));
+   return num(`Twee krachten F₁ = ${a} N en F₂ = ${b} N grijpen aan in hetzelfde punt en maken een hoek van ${al}° met elkaar. Bereken de grootte van de resultante.`,
+     R,'N',`R = √(F₁² + F₂² + 2·F₁·F₂·cos α)<br>= √(${a}² + ${b}² + 2·${a}·${b}·cos ${al}°) = ${f(R)} N`+(al>90?'<br>Let op: cos '+al+'° is negatief.':''), figAngle(al,'F₁','F₂')); },
+ ()=>{ const a=rnd(30,300,10), b=rnd(30,300,10), p=deg(Math.atan(b/a));
+   return num(`Twee krachten F₁ = ${a} N (horizontaal) en F₂ = ${b} N (verticaal) staan loodrecht op elkaar. Welke hoek maakt de resultante met F₁?`,
+     p,'°',`tan φ = F₂ / F₁ = ${b} / ${a} = ${f(b/a,4)}<br>φ = tan⁻¹(${f(b/a,4)}) = ${f(p,1)}°`, figAngle(90,'F₁','F₂')); },
+ ()=>{ const a=rnd(50,200,10), b=rnd(50,200,10), c=rnd(50,200,10), th=pick([120,135,150,210,225,240]);
+   const Rx=a+c*Math.cos(rad(th)), Ry=b+c*Math.sin(rad(th)), R=Math.hypot(Rx,Ry), o=[165,110], L=70;
+   const pt=(an,l)=>[o[0]+l*Math.cos(rad(an)), o[1]-l*Math.sin(rad(an))];
+   const fig=svgW(330,220, `<line x1="20" y1="${o[1]}" x2="310" y2="${o[1]}" stroke="var(--muted)" stroke-dasharray="3 4"/><line x1="${o[0]}" y1="10" x2="${o[0]}" y2="210" stroke="var(--muted)" stroke-dasharray="3 4"/>`+
+     arr(o[0],o[1],...pt(0,95),'var(--f1)','F₁')+arr(o[0],o[1],...pt(90,75),'var(--f2)','F₂')+arr(o[0],o[1],...pt(th,85),'var(--f3)','F₃')+arc(o[0],o[1],26,0,th,th+'°')+dot(...o));
+   return num(`Drie krachten grijpen aan in hetzelfde punt:<br>F₁ = ${a} N langs de positieve x-as,<br>F₂ = ${b} N langs de positieve y-as,<br>F₃ = ${c} N onder een hoek van ${th}° met de positieve x-as (tegenwijzerzin gemeten).<br>Bereken de grootte van de resultante.`,
+     R,'N',`ΣFx = ${a} + ${c}·cos ${th}° = ${f(Rx)} N<br>ΣFy = ${b} + ${c}·sin ${th}° = ${f(Ry)} N<br>R = √(ΣFx² + ΣFy²) = ${f(R)} N`, fig); },
+ ()=>tf('Je mag aan een star lichaam twee even grote, tegengestelde krachten met dezelfde werklijn toevoegen, zonder dat de uitwerking van de krachten verandert.', true,
+   'Waar. Twee even grote, tegengestelde krachten op dezelfde werklijn hebben samen een resultante nul. Ze veranderen niets aan de werking op een star lichaam.'),
+ ()=>mc('Bij welk soort lichaam mag je een kracht langs haar werklijn verplaatsen zonder dat de uitwerking verandert?',
+   'Bij een star lichaam', ['Bij een vervormbaar lichaam','Bij elk lichaam','Bij geen enkel lichaam'],
+   'Bij een star lichaam maakt het aangrijpingspunt op de werklijn niet uit. Bij een vervormbaar lichaam wel: trekken of duwen aan een spons geeft een andere vervorming.'),
+ ()=>{ const a=rnd(20,80,10), b=rnd(a+20,150,10), mn=b-a, mx=a+b, mid=Math.round((mn+mx)/20)*10, bad=pick([mn-10,mx+10]);
+   return mc(`Twee krachten van ${a} N en ${b} N grijpen aan in hetzelfde punt. De hoek ertussen kan je vrij kiezen. Welke waarde kan de resultante <b>niet</b> hebben?`,
+     `${bad} N`, [`${mn} N`,`${mid} N`,`${mx} N`],
+     `De resultante ligt altijd tussen het verschil (${b} − ${a} = ${mn} N, bij 180°) en de som (${a} + ${b} = ${mx} N, bij 0°). ${bad} N valt daarbuiten.`); },
+ ()=>tf('De resultante van twee hoekmakende krachten is het grootst als de hoek tussen de krachten 90° is.', false,
+   'Onwaar. De resultante is het grootst bij 0° (zelfde richting en zin): dan is R = F₁ + F₂. Hoe groter de hoek, hoe kleiner R.'),
+],
+O:[
+ ()=>{ const F=rnd(50,500,10), al=pick([20,25,30,35,40,50,55,60,65,70]), x=Math.random()<.5;
+   return num(`Een kracht F = ${F} N maakt een hoek van ${al}° met de horizontale x-as. Ontbind de kracht. Hoe groot is de <b>${x?'horizontale component Fx':'verticale component Fy'}</b>?`,
+     x?F*Math.cos(rad(al)):F*Math.sin(rad(al)),'N',
+     x?`Fx = F · cos α = ${F} · cos ${al}° = ${f(F*Math.cos(rad(al)))} N`:`Fy = F · sin α = ${F} · sin ${al}° = ${f(F*Math.sin(rad(al)))} N`, figForce(al,'F')); },
+ ()=>{ const R=rnd(300,1200,50), l=pick([1,1.2,1.5,2,2.5,3]), a=Math.round(rnd(0.2,l-0.2,0.1)*10)/10, b=Math.round((l-a)*10)/10, ask1=Math.random()<.5;
+   const F1=R*b/l, F2=R*a/l;
+   return num(`Een resultante R = ${R} N (naar beneden) moet ontbonden worden in twee evenwijdige componenten met <b>dezelfde zin</b>: F₁ en F₂. De werklijnen van F₁ en F₂ liggen ${f(l)} m uit elkaar. R ligt op ${f(a)} m van F₁. Bereken ${ask1?'F₁':'F₂'}.`,
+     ask1?F1:F2,'N',`R ligt op a = ${f(a)} m van F₁ en op b = ${f(b)} m van F₂.<br>F₁ = R · b / (a + b) = ${R} · ${f(b)} / ${f(l)} = ${f(F1)} N<br>F₂ = R · a / (a + b) = ${R} · ${f(a)} / ${f(l)} = ${f(F2)} N<br>Controle: F₁ + F₂ = ${R} N en F₁ · a = F₂ · b.`,
+     figBeam(l,[{x:0,dir:'down',lab:'F₁ = ?',col:'var(--f1)'},{x:l,dir:'down',lab:'F₂ = ?',col:'var(--f2)'},{x:a,dir:'down',lab:'R',col:'var(--fr)',dash:1}],[[0,a,f(a)+' m',0],[0,l,f(l)+' m',1]])); },
+ ()=>{ const R=rnd(100,600,50), d=pick([0.5,0.8,1,1.2,1.5]), a=pick([0.2,0.3,0.4,0.5,0.6]), ask1=Math.random()<.5;
+   const F2=R*a/d, F1=R*(a+d)/d, L=a+d;
+   return num(`Een resultante R = ${R} N (naar beneden) moet ontbonden worden in twee evenwijdige componenten met <b>tegengestelde zin</b>: F₁ (naar beneden) en F₂ (naar boven). F₁ en F₂ liggen ${f(d)} m uit elkaar. R ligt buiten de componenten, aan de kant van F₁, op ${f(a)} m van F₁. Bereken ${ask1?'F₁':'F₂'}.`,
+     ask1?F1:F2,'N',`Momenten t.o.v. het punt van R: F₁ · ${f(a)} = F₂ · ${f(L)}<br>En F₁ − F₂ = R = ${R} N<br>⇒ F₂ = R · ${f(a)} / ${f(d)} = ${f(F2)} N<br>⇒ F₁ = R + F₂ = ${f(F1)} N`,
+     figBeam(L,[{x:0,dir:'up',lab:'F₂ = ?',col:'var(--f2)'},{x:d,dir:'down',lab:'F₁ = ?',col:'var(--f1)'},{x:L,dir:'down',lab:'R',col:'var(--fr)',dash:1}],[[0,d,f(d)+' m',0],[d,L,f(a)+' m',0]])); },
+ ()=>mc('Je ontbindt een resultante in twee evenwijdige componenten met <b>dezelfde zin</b>. Wat is juist?',
+   'De grootste component ligt het dichtst bij de resultante',
+   ['De kleinste component ligt het dichtst bij de resultante','De resultante ligt buiten de twee componenten','De twee componenten zijn altijd even groot'],
+   'Uit F₁ · a = F₂ · b volgt: hoe groter de kracht, hoe kleiner haar afstand tot R. De resultante ligt tussen de componenten.'),
+ ()=>mc('Je ontbindt een resultante in twee evenwijdige componenten met <b>tegengestelde zin</b>. Waar ligt de resultante?',
+   'Buiten de componenten, aan de kant van de grootste component',
+   ['Tussen de twee componenten, dichtst bij de grootste','Buiten de componenten, aan de kant van de kleinste component','Precies in het midden tussen de componenten'],
+   'Bij tegengestelde zin is R = F₁ − F₂ (verschil) en ligt R buiten de componenten, aan de kant van de grootste kracht.'),
+],
+M:[
+ ()=>{ const F=rnd(20,400,10), d=pick([0.2,0.25,0.3,0.4,0.5,0.75,1.2,1.5]);
+   return num(`Een kracht van ${F} N werkt op een loodrechte afstand (arm) van ${f(d)} m van het draaipunt. Bereken het moment van de kracht t.o.v. het draaipunt.`,
+     F*d,'Nm',`M = F · d = ${F} N · ${f(d)} m = ${f(F*d)} Nm`); },
+ ()=>{ const F=rnd(20,300,5), d=rnd(12,60,2);
+   return num(`Met een moersleutel duw je met een kracht van ${F} N loodrecht op de sleutel, op ${d} cm van het midden van de moer. Hoe groot is het moment (in Nm)?`,
+     F*d/100,'Nm',`Eerst omzetten: ${d} cm = ${f(d/100)} m<br>M = F · d = ${F} N · ${f(d/100)} m = ${f(F*d/100)} Nm`); },
+ ()=>mc('In welke eenheid druk je het moment van een kracht uit?', 'Nm (newtonmeter)', ['N/m (newton per meter)','N (newton)','kg · m/s²'],
+   'M = F · d: newton maal meter geeft newtonmeter (Nm).'),
+ ()=>mc('Wanneer is het moment van een kracht t.o.v. een punt O gelijk aan nul?', 'Als de werklijn van de kracht door O gaat',
+   ['Als de kracht loodrecht op de arm staat','Als de kracht naar beneden gericht is','Als het aangrijpingspunt ver van O ligt'],
+   'Gaat de werklijn door O, dan is de arm d = 0 en dus M = F · 0 = 0. De kracht doet dan niet draaien rond O.'),
+ ()=>{ const l=pick([0.3,0.4,0.5,0.6,0.8,1]), F=rnd(50,300,10), al=pick([30,40,45,50,60,120,135,150]), M=F*l*Math.sin(rad(al));
+   return num(`Op het uiteinde van een staaf met lengte ${f(l)} m (draaipunt O aan het andere uiteinde) werkt een kracht F = ${F} N. De kracht maakt een hoek van ${al}° met de staaf. Bereken het moment van F t.o.v. O.`,
+     M,'Nm',`Alleen de component loodrecht op de staaf doet draaien: F⊥ = F · sin α = ${F} · sin ${al}° = ${f(F*Math.sin(rad(al)))} N<br>M = F⊥ · l = ${f(F*Math.sin(rad(al)))} · ${f(l)} = ${f(M)} Nm<br>(of: arm d = l · sin α = ${f(l*Math.sin(rad(al)),3)} m)`, figLever(al,f(l)+' m','F')); },
+ ()=>{ const F1=rnd(100,600,20), a1=pick([0.2,0.25,0.3,0.4,0.5]), a2=pick([0.8,1,1.2,1.5,2]), F2=F1*a1/a2, L=a1+a2;
+   return num(`Een hefboom is in evenwicht. Links van het draaipunt werkt een last F₁ = ${F1} N op ${f(a1)} m van het draaipunt. Rechts werkt een kracht F₂ op ${f(a2)} m van het draaipunt. Beide krachten staan loodrecht op de hefboom. Bereken F₂.`,
+     F2,'N',`Evenwicht: moment linksom = moment rechtsom<br>F₁ · a₁ = F₂ · a₂ ⇒ F₂ = ${F1} · ${f(a1)} / ${f(a2)} = ${f(F2)} N`,
+     figBeam(L,[{x:0,dir:'down',lab:'F₁ = '+F1+' N',col:'var(--f1)'},{x:L,dir:'down',lab:'F₂ = ?',col:'var(--f2)'}],[[0,a1,f(a1)+' m',0],[a1,L,f(a2)+' m',0]],a1)); },
+ ()=>{ const n=pick([2,3]), xs=shuffle([0,0.5,1,1.5,2,2.5,3,3.5,4]).slice(0,n).sort((p,q)=>p-q), Fs=xs.map(()=>rnd(100,800,50));
+   const sF=Fs.reduce((s,v)=>s+v,0), sM=Fs.reduce((s,v,i)=>s+v*xs[i],0), xR=sM/sF, L=Math.max(4,xs[n-1]);
+   const names=['F₁','F₂','F₃'], cols=['var(--f1)','var(--f2)','var(--f3)'];
+   return num(`Op een balk werken ${n} evenwijdige krachten naar beneden: ${xs.map((x,i)=>`${names[i]} = ${Fs[i]} N op ${f(x)} m van punt A`).join(', ')}. Bepaal analytisch (stelling van Varignon) op welke afstand van A de resultante ligt.`,
+     xR,'m',`R = ${Fs.join(' + ')} = ${sF} N<br>Varignon t.o.v. A: R · x = ${Fs.map((F,i)=>F+' · '+f(xs[i])).join(' + ')} = ${f(sM)} Nm<br>x = ${f(sM)} / ${sF} = ${f(xR)} m`,
+     figBeam(L,xs.map((x,i)=>({x,dir:'down',lab:names[i],col:cols[i]})),[[0,L,'A ← '+f(L)+' m →',0]])); },
+ ()=>mc('Wat zegt de <b>stelling van Varignon</b>?',
+   'Het moment van de resultante t.o.v. een punt is gelijk aan de algebraïsche som van de momenten van de componenten t.o.v. datzelfde punt',
+   ['De resultante van twee krachten is gelijk aan de som van hun grootten','Het moment van een kracht is altijd gelijk aan kracht maal lengte van de staaf','De som van de momenten van alle krachten is altijd nul'],
+   'Varignon: M(R) = M(F₁) + M(F₂) + … t.o.v. hetzelfde punt. Zo kan je de ligging van de resultante analytisch bepalen.'),
+ ()=>{ const M=rnd(20,120,5), d=rnd(15,40,5);
+   return num(`Een bout moet aangespannen worden met een moment van ${M} Nm. De sleutel is ${d} cm lang en je duwt loodrecht op het uiteinde. Hoe groot moet de kracht zijn?`,
+     M/(d/100),'N',`d = ${d} cm = ${f(d/100)} m<br>F = M / d = ${M} / ${f(d/100)} = ${f(M/(d/100))} N`); },
+ ()=>mc('Een moer zit erg vast. Hoe kan je met <b>minder kracht</b> hetzelfde moment krijgen?',
+   'Een langere sleutel gebruiken en loodrecht duwen', ['Een kortere sleutel gebruiken','Schuin langs de sleutel duwen','Dichter bij de moer duwen'],
+   'M = F · d: met een grotere arm d heb je een kleinere kracht F nodig. Loodrecht duwen geeft de grootste arm.'),
+],
+};
+
+/* ===== Examen opbouwen ===== */
+function buildExam(){
+  const qs=[];
+  for(const t of Object.keys(QUOTA)){
+    shuffle(BANK[t].map((_,i)=>i)).slice(0,QUOTA[t]).forEach(i=>{ const q=BANK[t][i](); q.topic=t; q.gid=t+i; qs.push(q); });
+  }
+  return qs;
+}
+const parseNum = s => { if(s==null) return NaN; const t=String(s).replace(/\s/g,'').replace(',','.').match(/^[-+]?\d*\.?\d+/); return t?parseFloat(t[0]):NaN; };
+function isCorrect(q,a){
+  if(q.type==='mc') return a===q.correct;
+  const v=parseNum(a); if(isNaN(v)) return false;
+  return Math.abs(v-q.answer) <= Math.max(Math.abs(q.answer)*0.015, 0.02);
+}
+const fmtAnswer = (q,a) => q.type==='mc' ? (a==null?'—':esc(q.choices[a])) : (a==null||a===''?'—':esc(a)+' '+q.unit);
+const fmtCorrect = q => q.type==='mc' ? esc(q.choices[q.correct]) : f(q.answer, q.unit==='°'?1:2)+' '+q.unit;
+
+/* ===== Opslag ===== */
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+let S = store.get('mech_state', null);
+const save = () => store.set('mech_state', S);
+
+/* ===== Uitslag doorsturen (ntfy) ===== */
+async function flushResults(){
+  const q=store.get('mech_outbox',[]); if(!q.length) return;
+  const rest=[];
+  for(const msg of q){
+    try{ const r=await fetch('https://ntfy.sh/',{method:'POST',body:JSON.stringify(msg)}); if(!r.ok) rest.push(msg); }
+    catch(e){ rest.push(msg); }
+  }
+  store.set('mech_outbox',rest);
+  const el=document.getElementById('sendstate');
+  if(el) el.textContent = rest.length ? 'Uitslag nog niet doorgestuurd (geen verbinding?) — wordt later opnieuw geprobeerd.' : 'Uitslag doorgestuurd.';
+}
+function queueResult(){
+  const r=S.result, n=S.questions.length;
+  const per=Object.keys(TOPICS).map(t=>`${TOPICS[t]}: ${r.per[t][0]}/${r.per[t][1]}`).join('\n');
+  const fout=S.questions.map((q,i)=>isCorrect(q,S.answers[i])?null:`V${i+1} (${TOPICS[q.topic]}): gaf ${S.answers[i]==null||S.answers[i]===''?'niets':(q.type==='mc'?q.choices[S.answers[i]]:S.answers[i]+' '+q.unit)} — juist: ${q.type==='mc'?q.choices[q.correct]:f(q.answer)+' '+q.unit}`).filter(Boolean);
+  const msg={topic:NTFY_TOPIC, title:`Mechanica${S.name?' – '+S.name:''}: ${r.score}/${n} (${r.pct}%)`,
+    message:`${new Date(r.end).toLocaleString('nl-BE')} · duur ${r.min} min\n\n${per}\n\n${fout.length?'Fout:\n'+fout.join('\n'):'Alles juist!'}`.slice(0,3900),
+    tags:[r.pct>=50?'white_check_mark':'x'], priority:3};
+  const q=store.get('mech_outbox',[]); q.push(msg); store.set('mech_outbox',q);
+}
+
+/* ===== Schermen ===== */
+const app=document.getElementById('app');
+function render(){
+  if(!S || !S.questions) return renderStart();
+  if(S.finished) return S.reviewing ? renderReview() : renderResult();
+  renderQuestion();
+}
+function renderStart(){
+  const name=store.get('mech_name',''), hist=store.get('mech_hist',[]);
+  app.innerHTML=`<div class="card">
+    <h2>Proefexamen</h2>
+    <p class="muted">Leerstof: hoofdstuk 1 (de wetten van Newton) en hoofdstuk 2 tot en met de stelling van Varignon (p. 76).</p>
+    <ul class="topics">${Object.keys(QUOTA).map(t=>`<li>${TOPICS[t]} — ${QUOTA[t]} vragen</li>`).join('')}</ul>
+    <p class="small muted">20 vragen, geen tijdslimiet. Elk proefexamen heeft andere vragen en andere getallen. Neem een rekenmachine. Gebruik g = 9,81 m/s² en rond af op 2 decimalen. Je mag terugbladeren tot je indient.</p>
+    <label class="f" for="nm">Je naam</label>
+    <input type="text" id="nm" value="${esc(name)}" autocomplete="given-name">
+    <div class="row"><span></span><button class="pri" id="go">Start proefexamen</button></div>
+    ${hist.length?`<div class="hist"><b>Vorige pogingen</b><table class="tbl">${hist.slice(-8).reverse().map(h=>`<tr><td>${new Date(h.d).toLocaleDateString('nl-BE')} ${new Date(h.d).toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit'})}</td><td>${h.s}/${h.n} (${h.p}%)</td></tr>`).join('')}</table></div>`:''}
+  </div>`;
+  document.getElementById('go').onclick=()=>{
+    const nm=document.getElementById('nm').value.trim(); store.set('mech_name',nm);
+    S={name:nm, questions:buildExam(), answers:[], cur:0, start:Date.now(), finished:false}; save(); render();
+  };
+}
+function renderQuestion(){
+  const n=S.questions.length, i=S.cur, q=S.questions[i], a=S.answers[i];
+  const answered=S.answers.filter(x=>x!=null&&x!=='').length;
+  let body='';
+  if(q.type==='mc') body=`<div class="choices">${q.choices.map((c,k)=>`<button class="choice ${a===k?'sel':''}" data-k="${k}"><span class="k">${'ABCD'[k]}</span><span>${c}</span></button>`).join('')}</div>`;
+  else body=`<div class="numrow"><input inputmode="decimal" id="inp" placeholder="antwoord" value="${a!=null?esc(a):''}" autocomplete="off"><b>${q.unit}</b></div>`;
+  app.innerHTML=`<div class="bar"><i style="width:${answered/n*100}%"></i></div>
+   <div class="card">
+    <span class="tag">${TOPICS[q.topic]}</span>
+    <div class="muted small">Vraag ${i+1} van ${n}</div>
+    <div class="qtext">${q.text}</div>${q.svg||''}${body}
+    <div class="row"><button id="prev" ${i===0?'disabled':''}>← Vorige</button>
+      ${i<n-1?`<button class="pri" id="next">Volgende →</button>`:`<button class="pri" id="done">Indienen</button>`}</div>
+    <div class="dots">${S.questions.map((_,k)=>`<button data-go="${k}" class="${S.answers[k]!=null&&S.answers[k]!==''?'ans':''} ${k===i?'cur':''}">${k+1}</button>`).join('')}</div>
+   </div>`;
+  app.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{ S.answers[i]=+b.dataset.k; save(); renderQuestion(); });
+  const inp=document.getElementById('inp');
+  if(inp){ inp.oninput=()=>{ S.answers[i]=inp.value; save(); };
+           inp.onkeydown=e=>{ if(e.key==='Enter') (document.getElementById('next')||document.getElementById('done')).click(); };
+           if(matchMedia('(pointer:fine)').matches) inp.focus(); }
+  const go=k=>{ S.cur=k; save(); renderQuestion(); window.scrollTo(0,0); };
+  document.getElementById('prev').onclick=()=>go(i-1);
+  const nx=document.getElementById('next'); if(nx) nx.onclick=()=>go(i+1);
+  const dn=document.getElementById('done'); if(dn) dn.onclick=finish;
+  app.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(+b.dataset.go));
+}
+function finish(){
+  const n=S.questions.length, open=n-S.answers.filter(x=>x!=null&&x!=='').length;
+  if(open>0 && !confirm(`Je hebt nog ${open} vraag${open>1?'en':''} niet beantwoord. Toch indienen?`)) return;
+  const per={}; Object.keys(TOPICS).forEach(t=>per[t]=[0,0]);
+  let score=0; S.questions.forEach((q,i)=>{ const ok=isCorrect(q,S.answers[i]); per[q.topic][1]++; if(ok){score++; per[q.topic][0]++;} });
+  const end=Date.now();
+  S.result={score, pct:Math.round(score/n*100), per, end, min:Math.max(1,Math.round((end-S.start)/60000))};
+  S.finished=true; S.reviewing=false; save();
+  const h=store.get('mech_hist',[]); h.push({d:end,s:score,n,p:S.result.pct}); store.set('mech_hist',h);
+  queueResult(); render(); window.scrollTo(0,0); flushResults();
+}
+function renderResult(){
+  const r=S.result, n=S.questions.length, p=r.pct;
+  const col=p>=50?'var(--ok)':'var(--bad)', bg=p>=50?'var(--okbg)':'var(--badbg)';
+  const msg=p>=85?'Uitstekend!':p>=70?'Goed bezig!':p>=50?'Geslaagd, maar er is nog werk.':'Nog even oefenen — bekijk zeker je fouten.';
+  app.innerHTML=`<div class="card">
+    <div class="score"><div class="ring" style="background:${bg};color:${col}">${r.score}/${n}</div>
+      <div><h2>${p}%</h2><p>${msg}</p><p class="small muted">Duur: ${r.min} min</p></div></div>
+    <table class="tbl">${Object.keys(TOPICS).map(t=>`<tr><td>${TOPICS[t]}</td><td>${r.per[t][0]} / ${r.per[t][1]}</td></tr>`).join('')}</table>
+    <div class="row"><button id="new">Nieuw proefexamen</button><button class="pri" id="rev">Bekijk mijn antwoorden</button></div>
+    <p class="small muted" id="sendstate"></p>
+  </div>`;
+  document.getElementById('rev').onclick=()=>{ S.reviewing=true; save(); render(); window.scrollTo(0,0); };
+  document.getElementById('new').onclick=()=>{ S=null; store.del('mech_state'); render(); window.scrollTo(0,0); };
+}
+function renderReview(){
+  const r=S.result, n=S.questions.length;
+  app.innerHTML=`<div class="card"><div class="row" style="margin-top:0"><b>Jouw antwoorden · ${r.score}/${n}</b><button id="back">← Uitslag</button></div></div>`+
+   S.questions.map((q,i)=>{ const ok=isCorrect(q,S.answers[i]);
+     return `<div class="card rev ${ok?'ok':'bad'}"><span class="tag">${TOPICS[q.topic]}</span>
+       <div class="verd">Vraag ${i+1} · ${ok?'✓ Juist':'✗ Fout'}</div>
+       <div class="qtext">${q.text}</div>${q.svg||''}
+       <div class="ans mine"><b>Jouw antwoord:</b> ${fmtAnswer(q,S.answers[i])}</div>
+       ${ok?'':`<div class="ans right"><b>Juist antwoord:</b> ${fmtCorrect(q)}</div>`}
+       <div class="uitleg">${q.uitleg}</div></div>`; }).join('')+
+   `<div class="row"><button id="back2">← Uitslag</button><button class="pri" id="new">Nieuw proefexamen</button></div>`;
+  const back=()=>{ S.reviewing=false; save(); render(); window.scrollTo(0,0); };
+  document.getElementById('back').onclick=back; document.getElementById('back2').onclick=back;
+  document.getElementById('new').onclick=()=>{ S=null; store.del('mech_state'); render(); window.scrollTo(0,0); };
+}
+render();
+flushResults();
+</script>
+</body>
+</html>
