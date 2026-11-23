@@ -63,6 +63,14 @@ svg.fig text{font:600 13px system-ui,sans-serif}
 .ans.right{background:var(--okbg)}
 .uitleg{margin-top:10px;font-size:.93rem;color:var(--muted)}
 .hist{font-size:.9rem;margin-top:10px}
+.gg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.gg>div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.gg b{font-size:.85rem;color:var(--acc);text-transform:uppercase;letter-spacing:.03em}
+.gg ul{margin:4px 0 0;padding-left:1.1em}
+.gg li{margin:2px 0}
+@media (max-width:480px){.gg{grid-template-columns:1fr}}
+.tip{margin-top:8px;font-size:.85rem;color:var(--muted)}
+.hint{font-size:.85rem;color:var(--muted);margin-top:6px}
 .hidden{display:none}
 .small{font-size:.85rem}
 </style>
@@ -89,7 +97,12 @@ const rad = d => d*Math.PI/180;
 const deg = r => r*180/Math.PI;
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-function num(text, answer, unit, uitleg, svg){ return {type:'num', text, answer, unit, uitleg, svg}; }
+/* Rekenvraag: korte situatie + vak Gegeven / Gevraagd. hoek=true toont de tip over DEG. */
+function num(text, answer, unit, uitleg, svg, geg, gevr, hoek){
+  const box = geg ? `<div class="gg"><div><b>Gegeven</b><ul>${geg.map(x=>`<li>${x}</li>`).join('')}</ul></div><div><b>Gevraagd</b><ul><li>${gevr}</li></ul></div></div>` : '';
+  const tip = hoek ? `<div class="tip">Tip: zet je rekenmachine in <b>DEG</b> (graden).</div>` : '';
+  return {type:'num', text, gg:box+tip, answer, unit, uitleg, svg};
+}
 function mc(text, correct, wrong, uitleg, svg){ const ch=shuffle([correct,...wrong]); return {type:'mc', text, choices:ch, correct:ch.indexOf(correct), uitleg, svg}; }
 function tf(text, truth, uitleg){ return {type:'mc', text:'<b>Waar of onwaar?</b> '+text, choices:['Waar','Onwaar'], correct:truth?0:1, uitleg}; }
 
@@ -166,17 +179,21 @@ N:[
    return mc(s[0]+'<br>Welke wet van Newton verklaart dit het best?', 'De '+W[s[1]].replace('de ',''), W.filter((_,i)=>i!==s[1]).map(w=>'De '+w.replace('de ','')),
      ['Traagheid: het lichaam wil zijn bewegingstoestand behouden.','Bij dezelfde kracht hangt de versnelling af van de massa: a = F / m.','Krachten komen altijd in paren voor: werkt A op B, dan werkt B even hard terug op A.'][s[1]]); },
  ()=>{ const m=pick([2,5,8,12,25,40,750,1200,1500]), a=pick([0.5,1.5,2,2.5,3,4,6]);
-   return num(`Een voorwerp met een massa van ${f(m)} kg krijgt een versnelling van ${f(a)} m/s². Hoe groot is de resulterende kracht op het voorwerp?`,
-     m*a,'N',`F = m · a = ${f(m)} kg · ${f(a)} m/s² = ${f(m*a)} N`); },
+   return num(`Een voorwerp versnelt. Hoe groot is de kracht die het voorwerp doet versnellen?`,
+     m*a,'N',`Tweede wet van Newton: F = m · a = ${f(m)} kg · ${f(a)} m/s² = ${f(m*a)} N`, null,
+     [`massa m = ${f(m)} kg`,`versnelling a = ${f(a)} m/s²`], 'kracht F (in N)'); },
  ()=>{ const F=rnd(20,600,10), m=pick([4,5,8,10,16,20,25,50]);
-   return num(`Op een kist van ${m} kg werkt een resulterende kracht van ${F} N. Welke versnelling krijgt de kist?`,
-     F/m,'m/s²',`a = F / m = ${F} N / ${m} kg = ${f(F/m)} m/s²`); },
+   return num(`Je duwt een kist over een gladde vloer. Welke versnelling krijgt de kist?`,
+     F/m,'m/s²',`Uit F = m · a volgt a = F / m = ${F} N / ${m} kg = ${f(F/m)} m/s²`, null,
+     [`massa m = ${m} kg`,`kracht F = ${F} N`], 'versnelling a (in m/s²)'); },
  ()=>{ const m=pick([0.5,2,5,12,25,65,80,250]);
-   return num(`Bereken het gewicht van een voorwerp met een massa van ${f(m)} kg (g = 9,81 m/s²).`,
-     m*g,'N',`G = m · g = ${f(m)} kg · 9,81 m/s² = ${f(m*g)} N`); },
+   return num(`Hoe groot is het gewicht (de zwaartekracht) van dit voorwerp?`,
+     m*g,'N',`G = m · g = ${f(m)} kg · 9,81 m/s² = ${f(m*g)} N`, null,
+     [`massa m = ${f(m)} kg`,`g = 9,81 m/s²`], 'gewicht G (in N)'); },
  ()=>{ const G=rnd(100,2500,50);
-   return num(`Een voorwerp heeft een gewicht van ${G} N. Wat is de massa van het voorwerp (g = 9,81 m/s²)?`,
-     G/g,'kg',`m = G / g = ${G} N / 9,81 m/s² = ${f(G/g)} kg`); },
+   return num(`Je kent het gewicht van een voorwerp. Wat is zijn massa?`,
+     G/g,'kg',`Uit G = m · g volgt m = G / g = ${G} N / 9,81 m/s² = ${f(G/g)} kg`, null,
+     [`gewicht G = ${G} N`,`g = 9,81 m/s²`], 'massa m (in kg)'); },
  ()=>mc('Een boek ligt op een tafel. De aarde trekt het boek naar beneden (zwaartekracht). Wat is volgens de derde wet van Newton de <b>reactiekracht</b> van die zwaartekracht?',
    'De kracht waarmee het boek aan de aarde trekt',
    ['De kracht waarmee de tafel het boek omhoog duwt','De kracht waarmee het boek op de tafel drukt','Er is geen reactiekracht, want het boek ligt stil'],
@@ -184,11 +201,13 @@ N:[
  ()=>tf('Actie en reactie heffen elkaar op, omdat ze even groot en tegengesteld zijn.', false,
    'Onwaar. Actie en reactie werken op twee <i>verschillende</i> lichamen. Krachten op verschillende lichamen kunnen elkaar niet opheffen.'),
  ()=>{ const m=rnd(800,1600,100), Fm=rnd(2000,5000,100), Fw=rnd(300,1500,50);
-   return num(`Een auto met een massa van ${m} kg wordt aangedreven met een trekkracht van ${Fm} N. De totale wrijvingskracht bedraagt ${Fw} N. Bereken de versnelling van de auto.`,
-     (Fm-Fw)/m,'m/s²',`Resulterende kracht: F = ${Fm} N − ${Fw} N = ${Fm-Fw} N<br>a = F / m = ${Fm-Fw} N / ${m} kg = ${f((Fm-Fw)/m)} m/s²`); },
+   return num(`De motor van een auto trekt de auto vooruit. De wrijving werkt tegen (naar achter). Welke versnelling krijgt de auto?`,
+     (Fm-Fw)/m,'m/s²',`Resulterende kracht: F = ${Fm} N − ${Fw} N = ${Fm-Fw} N<br>a = F / m = ${Fm-Fw} N / ${m} kg = ${f((Fm-Fw)/m)} m/s²`, null,
+     [`massa m = ${m} kg`,`trekkracht motor = ${Fm} N (vooruit)`,`wrijvingskracht = ${Fw} N (achteruit)`], 'versnelling a (in m/s²)<br><span class="tip">Eerst de resulterende kracht zoeken.</span>'); },
  ()=>{ const m=rnd(2,20), F=rnd(10,100,5), t=rnd(2,8);
-   return num(`Een voorwerp van ${m} kg ligt stil op een wrijvingsloos oppervlak. Gedurende ${t} s werkt er een constante kracht van ${F} N op. Welke snelheid heeft het voorwerp na die ${t} s?`,
-     F/m*t,'m/s',`a = F / m = ${F} / ${m} = ${f(F/m,3)} m/s²<br>v = a · t = ${f(F/m,3)} · ${t} = ${f(F/m*t)} m/s`); },
+   return num(`Een voorwerp ligt eerst stil. Er is geen wrijving. Een constante kracht duwt het een tijdje vooruit. Hoe snel gaat het voorwerp op het einde?`,
+     F/m*t,'m/s',`Stap 1: a = F / m = ${F} / ${m} = ${f(F/m,3)} m/s²<br>Stap 2: v = a · t = ${f(F/m,3)} · ${t} = ${f(F/m*t)} m/s`, null,
+     [`massa m = ${m} kg`,`kracht F = ${F} N`,`tijd t = ${t} s`,`beginsnelheid = 0 m/s`], 'eindsnelheid v (in m/s)<br><span class="tip">Eerst a berekenen, dan v = a · t.</span>'); },
  ()=>mc('Een astronaut neemt een gereedschapskist mee naar de maan. Wat geldt er op de maan in vergelijking met op aarde?',
    'De massa blijft gelijk, het gewicht wordt kleiner',
    ['De massa en het gewicht worden allebei kleiner','De massa wordt kleiner, het gewicht blijft gelijk','De massa en het gewicht blijven allebei gelijk'],
@@ -210,30 +229,35 @@ S:[
    ['Massa, snelheid, richting en grootte','Aangrijpingspunt, massa, zin en versnelling','Grootte, eenheid, richting en tijdsduur'],
    'Een kracht is een vector: je tekent ze met een pijl die het aangrijpingspunt, de richting (werklijn), de zin en de grootte toont.'),
  ()=>{ const a=rnd(20,200,10), b=rnd(20,200,10), c=rnd(20,a+b-10,10), R=a+b-c;
-   return num(`Op dezelfde werklijn werken drie krachten: F₁ = ${a} N naar rechts, F₂ = ${b} N naar rechts en F₃ = ${c} N naar links. Hoe groot is de resultante?`,
-     R,'N',`Neem rechts positief: R = ${a} + ${b} − ${c} = ${R} N (naar rechts).`); },
+   return num(`Drie krachten liggen op dezelfde lijn (zelfde werklijn). Twee duwen naar rechts, één naar links. Hoe groot is de resultante (de totale kracht)?`,
+     R,'N',`Naar rechts tel je op, naar links trek je af:<br>R = ${a} + ${b} − ${c} = ${R} N (naar rechts)`,
+     null, [`F₁ = ${a} N naar rechts`,`F₂ = ${b} N naar rechts`,`F₃ = ${c} N naar links`], 'resultante R (in N)'); },
  ()=>{ let a=rnd(30,300,10), b=rnd(30,300,10); while(a===b) b=rnd(30,300,10);
    const d=Math.abs(a-b), z=a>b?'rechts':'links', nz=a>b?'links':'rechts';
    return mc(`Twee krachten werken op dezelfde werklijn: F₁ = ${a} N naar rechts en F₂ = ${b} N naar links. Wat is de resultante?`,
      `${d} N naar ${z}`, [`${d} N naar ${nz}`,`${a+b} N naar ${z}`,`${a+b} N naar ${nz}`],
      `Tegengestelde krachten op dezelfde werklijn: R = verschil = ${Math.max(a,b)} − ${Math.min(a,b)} = ${d} N, met de zin van de grootste kracht (naar ${z}).`); },
  ()=>{ const a=rnd(30,300,10), b=rnd(30,300,10), R=Math.hypot(a,b);
-   return num(`Twee krachten F₁ = ${a} N en F₂ = ${b} N grijpen aan in hetzelfde punt en staan loodrecht op elkaar. Bereken de grootte van de resultante.`,
-     R,'N',`Loodrecht ⇒ stelling van Pythagoras:<br>R = √(F₁² + F₂²) = √(${a}² + ${b}²) = ${f(R)} N`, figAngle(90,'F₁','F₂')); },
+   return num(`Twee krachten trekken aan hetzelfde punt. Ze staan loodrecht op elkaar (hoek 90°), zoals op de tekening. Hoe groot is de resultante?`,
+     R,'N',`Bij 90° gebruik je Pythagoras:<br>R = √(F₁² + F₂²) = √(${a}² + ${b}²) = ${f(R)} N`, figAngle(90,'F₁','F₂'),
+     [`F₁ = ${a} N`,`F₂ = ${b} N`,`hoek tussen F₁ en F₂ = 90°`], 'resultante R (in N)'); },
  ()=>{ const a=rnd(20,200,10), b=rnd(20,200,10), al=pick([30,45,60,75,105,120,135,150]);
    const R=Math.sqrt(a*a+b*b+2*a*b*Math.cos(rad(al)));
-   return num(`Twee krachten F₁ = ${a} N en F₂ = ${b} N grijpen aan in hetzelfde punt en maken een hoek van ${al}° met elkaar. Bereken de grootte van de resultante.`,
-     R,'N',`R = √(F₁² + F₂² + 2·F₁·F₂·cos α)<br>= √(${a}² + ${b}² + 2·${a}·${b}·cos ${al}°) = ${f(R)} N`+(al>90?'<br>Let op: cos '+al+'° is negatief.':''), figAngle(al,'F₁','F₂')); },
+   return num(`Twee krachten trekken aan hetzelfde punt en maken een hoek met elkaar, zoals op de tekening. Hoe groot is de resultante?`,
+     R,'N',`R = √(F₁² + F₂² + 2·F₁·F₂·cos α)<br>= √(${a}² + ${b}² + 2·${a}·${b}·cos ${al}°) = ${f(R)} N`+(al>90?'<br>Let op: cos '+al+'° is negatief.':''), figAngle(al,'F₁','F₂'),
+     [`F₁ = ${a} N`,`F₂ = ${b} N`,`hoek tussen F₁ en F₂: α = ${al}°`], 'resultante R (in N)<br><span class="tip">Formule: R = √(F₁² + F₂² + 2·F₁·F₂·cos α)</span>', true); },
  ()=>{ const a=rnd(30,300,10), b=rnd(30,300,10), p=deg(Math.atan(b/a));
-   return num(`Twee krachten F₁ = ${a} N (horizontaal) en F₂ = ${b} N (verticaal) staan loodrecht op elkaar. Welke hoek maakt de resultante met F₁?`,
-     p,'°',`tan φ = F₂ / F₁ = ${b} / ${a} = ${f(b/a,4)}<br>φ = tan⁻¹(${f(b/a,4)}) = ${f(p,1)}°`, figAngle(90,'F₁','F₂')); },
+   return num(`Twee krachten trekken aan hetzelfde punt: F₁ horizontaal en F₂ verticaal (loodrecht op elkaar). De resultante ligt ertussen. Welke hoek φ maakt de resultante met F₁?`,
+     p,'°',`tan φ = F₂ / F₁ = ${b} / ${a} = ${f(b/a,4)}<br>φ = tan⁻¹(${f(b/a,4)}) = ${f(p,1)}°`, figAngle(90,'F₁','F₂'),
+     [`F₁ = ${a} N (horizontaal)`,`F₂ = ${b} N (verticaal)`], 'hoek φ tussen R en F₁ (in graden)<br><span class="tip">Gebruik tan φ = F₂ / F₁.</span>', true); },
  ()=>{ const a=rnd(50,200,10), b=rnd(50,200,10), c=rnd(50,200,10), th=pick([120,135,150,210,225,240]);
    const Rx=a+c*Math.cos(rad(th)), Ry=b+c*Math.sin(rad(th)), R=Math.hypot(Rx,Ry), o=[165,110], L=70;
    const pt=(an,l)=>[o[0]+l*Math.cos(rad(an)), o[1]-l*Math.sin(rad(an))];
    const fig=svgW(330,220, `<line x1="20" y1="${o[1]}" x2="310" y2="${o[1]}" stroke="var(--muted)" stroke-dasharray="3 4"/><line x1="${o[0]}" y1="10" x2="${o[0]}" y2="210" stroke="var(--muted)" stroke-dasharray="3 4"/>`+
      arr(o[0],o[1],...pt(0,95),'var(--f1)','F₁')+arr(o[0],o[1],...pt(90,75),'var(--f2)','F₂')+arr(o[0],o[1],...pt(th,85),'var(--f3)','F₃')+arc(o[0],o[1],26,0,th,th+'°')+dot(...o));
-   return num(`Drie krachten grijpen aan in hetzelfde punt:<br>F₁ = ${a} N langs de positieve x-as,<br>F₂ = ${b} N langs de positieve y-as,<br>F₃ = ${c} N onder een hoek van ${th}° met de positieve x-as (tegenwijzerzin gemeten).<br>Bereken de grootte van de resultante.`,
-     R,'N',`ΣFx = ${a} + ${c}·cos ${th}° = ${f(Rx)} N<br>ΣFy = ${b} + ${c}·sin ${th}° = ${f(Ry)} N<br>R = √(ΣFx² + ΣFy²) = ${f(R)} N`, fig); },
+   return num(`Drie krachten trekken aan hetzelfde punt, zoals op de tekening. Hoe groot is de resultante?`,
+     R,'N',`Stap 1, alles in x: ΣFx = ${a} + ${c}·cos ${th}° = ${f(Rx)} N<br>Stap 2, alles in y: ΣFy = ${b} + ${c}·sin ${th}° = ${f(Ry)} N<br>Stap 3: R = √(ΣFx² + ΣFy²) = ${f(R)} N`, fig,
+     [`F₁ = ${a} N naar rechts (langs de x-as)`,`F₂ = ${b} N naar boven (langs de y-as)`,`F₃ = ${c} N onder ${th}°, gemeten vanaf de positieve x-as, tegen de klok in`], 'resultante R (in N)<br><span class="tip">Ontbind F₃ in x en y, tel alle x-delen en y-delen op, en gebruik dan Pythagoras.</span>', true); },
  ()=>tf('Als je twee even grote, tegengestelde krachten met dezelfde werklijn toevoegt, verandert de resultante niet.', true,
    'Waar. Twee even grote, tegengestelde krachten op dezelfde werklijn hebben samen een resultante nul. Ze veranderen dus niets aan de resultante.'),
  ()=>{ const a=rnd(20,80,10), b=rnd(a+20,150,10), mn=b-a, mx=a+b, mid=Math.round((mn+mx)/20)*10, bad=pick([mn-10,mx+10]);
@@ -245,19 +269,22 @@ S:[
 ],
 O:[
  ()=>{ const F=rnd(50,500,10), al=pick([20,25,30,35,40,50,55,60,65,70]), x=Math.random()<.5;
-   return num(`Een kracht F = ${F} N maakt een hoek van ${al}° met de horizontale x-as. Ontbind de kracht. Hoe groot is de <b>${x?'horizontale component Fx':'verticale component Fy'}</b>?`,
+   return num(`Een schuine kracht F wordt opgesplitst (ontbonden) in een horizontaal deel Fx en een verticaal deel Fy. Hoe groot is het <b>${x?'horizontale deel Fx':'verticale deel Fy'}</b>?`,
      x?F*Math.cos(rad(al)):F*Math.sin(rad(al)),'N',
-     x?`Fx = F · cos α = ${F} · cos ${al}° = ${f(F*Math.cos(rad(al)))} N`:`Fy = F · sin α = ${F} · sin ${al}° = ${f(F*Math.sin(rad(al)))} N`, figForce(al,'F')); },
+     (x?`Fx = F · cos α = ${F} · cos ${al}° = ${f(F*Math.cos(rad(al)))} N`:`Fy = F · sin α = ${F} · sin ${al}° = ${f(F*Math.sin(rad(al)))} N`)+'<br>Onthoud: horizontaal (naast de hoek) → cos, verticaal (tegenover de hoek) → sin.', figForce(al,'F'),
+     [`F = ${F} N`,`hoek met de horizontale x-as: α = ${al}°`], x?'horizontale component Fx (in N)':'verticale component Fy (in N)', true); },
  ()=>{ const R=rnd(300,1200,50), l=pick([1,1.2,1.5,2,2.5,3]), a=Math.round(rnd(0.2,l-0.2,0.1)*10)/10, b=Math.round((l-a)*10)/10, ask1=Math.random()<.5;
    const F1=R*b/l, F2=R*a/l;
-   return num(`Een resultante R = ${R} N (naar beneden) moet ontbonden worden in twee evenwijdige componenten met <b>dezelfde zin</b>: F₁ en F₂. De werklijnen van F₁ en F₂ liggen ${f(l)} m uit elkaar. R ligt op ${f(a)} m van F₁. Bereken ${ask1?'F₁':'F₂'}.`,
+   return num(`Verdeel de kracht R over twee evenwijdige krachten F₁ en F₂ met <b>dezelfde zin</b> (allebei naar beneden), zoals op de tekening. Hoe groot is ${ask1?'F₁':'F₂'}?`,
      ask1?F1:F2,'N',`R ligt op a = ${f(a)} m van F₁ en op b = ${f(b)} m van F₂.<br>F₁ = R · b / (a + b) = ${R} · ${f(b)} / ${f(l)} = ${f(F1)} N<br>F₂ = R · a / (a + b) = ${R} · ${f(a)} / ${f(l)} = ${f(F2)} N<br>Controle: F₁ + F₂ = ${R} N en F₁ · a = F₂ · b.`,
-     figBeam(l,[{x:0,dir:'down',lab:'F₁ = ?',col:'var(--f1)'},{x:l,dir:'down',lab:'F₂ = ?',col:'var(--f2)'},{x:a,dir:'down',lab:'R',col:'var(--fr)',dash:1}],[[0,a,f(a)+' m',0],[0,l,f(l)+' m',1]])); },
+     figBeam(l,[{x:0,dir:'down',lab:'F₁ = ?',col:'var(--f1)'},{x:l,dir:'down',lab:'F₂ = ?',col:'var(--f2)'},{x:a,dir:'down',lab:'R = '+R+' N',col:'var(--fr)',dash:1}],[[0,a,f(a)+' m',0],[0,l,f(l)+' m',1]]),
+     [`R = ${R} N (naar beneden)`,`afstand F₁ ↔ F₂ = ${f(l)} m`,`afstand R ↔ F₁ = ${f(a)} m`], `${ask1?'F₁':'F₂'} (in N)<br><span class="tip">De grootste kracht ligt het dichtst bij R. Gebruik F₁ · a = F₂ · b en F₁ + F₂ = R (a = afstand R ↔ F₁, b = afstand R ↔ F₂).</span>`); },
  ()=>{ const R=rnd(100,600,50), d=pick([0.5,0.8,1,1.2,1.5]), a=pick([0.2,0.3,0.4,0.5,0.6]), ask1=Math.random()<.5;
    const F2=R*a/d, F1=R*(a+d)/d, L=a+d;
-   return num(`Een resultante R = ${R} N (naar beneden) moet ontbonden worden in twee evenwijdige componenten met <b>tegengestelde zin</b>: F₁ (naar beneden) en F₂ (naar boven). F₁ en F₂ liggen ${f(d)} m uit elkaar. R ligt buiten de componenten, aan de kant van F₁, op ${f(a)} m van F₁. Bereken ${ask1?'F₁':'F₂'}.`,
+   return num(`Verdeel de kracht R over twee evenwijdige krachten met <b>tegengestelde zin</b>: F₁ naar beneden en F₂ naar boven. R ligt hier <b>niet</b> tussen F₁ en F₂, maar ernaast (zie tekening). Hoe groot is ${ask1?'F₁':'F₂'}?`,
      ask1?F1:F2,'N',`Momenten t.o.v. het punt van R: F₁ · ${f(a)} = F₂ · ${f(L)}<br>En F₁ − F₂ = R = ${R} N<br>⇒ F₂ = R · ${f(a)} / ${f(d)} = ${f(F2)} N<br>⇒ F₁ = R + F₂ = ${f(F1)} N`,
-     figBeam(L,[{x:0,dir:'up',lab:'F₂ = ?',col:'var(--f2)'},{x:d,dir:'down',lab:'F₁ = ?',col:'var(--f1)'},{x:L,dir:'down',lab:'R',col:'var(--fr)',dash:1}],[[0,d,f(d)+' m',0],[d,L,f(a)+' m',0]])); },
+     figBeam(L,[{x:0,dir:'up',lab:'F₂ = ?',col:'var(--f2)'},{x:d,dir:'down',lab:'F₁ = ?',col:'var(--f1)'},{x:L,dir:'down',lab:'R = '+R+' N',col:'var(--fr)',dash:1}],[[0,d,f(d)+' m',0],[d,L,f(a)+' m',0]]),
+     [`R = ${R} N (naar beneden)`,`afstand F₂ ↔ F₁ = ${f(d)} m`,`afstand F₁ ↔ R = ${f(a)} m`], `${ask1?'F₁':'F₂'} (in N)<br><span class="tip">Hier geldt F₁ − F₂ = R. Neem momenten rond het punt waar R werkt.</span>`); },
  ()=>mc('Je ontbindt een resultante in twee evenwijdige componenten met <b>dezelfde zin</b>. Wat is juist?',
    'De grootste component ligt het dichtst bij de resultante',
    ['De kleinste component ligt het dichtst bij de resultante','De resultante ligt buiten de twee componenten','De twee componenten zijn altijd even groot'],
@@ -269,36 +296,42 @@ O:[
 ],
 M:[
  ()=>{ const F=rnd(20,400,10), d=pick([0.2,0.25,0.3,0.4,0.5,0.75,1.2,1.5]);
-   return num(`Een kracht van ${F} N werkt op een loodrechte afstand (arm) van ${f(d)} m van het draaipunt. Bereken het moment van de kracht t.o.v. het draaipunt.`,
-     F*d,'Nm',`M = F · d = ${F} N · ${f(d)} m = ${f(F*d)} Nm`); },
+   return num(`Een kracht doet een staaf draaien rond een draaipunt. De kracht staat loodrecht op de staaf. Hoe groot is het moment (de draaiende werking)?`,
+     F*d,'Nm',`M = F · d = ${F} N · ${f(d)} m = ${f(F*d)} Nm`, figLever(90,'d = '+f(d)+' m','F'),
+     [`kracht F = ${F} N`,`arm d = ${f(d)} m (afstand draaipunt ↔ kracht)`], 'moment M (in Nm)'); },
  ()=>{ const F=rnd(20,300,5), d=rnd(12,60,2);
-   return num(`Met een moersleutel duw je met een kracht van ${F} N loodrecht op de sleutel, op ${d} cm van het midden van de moer. Hoe groot is het moment (in Nm)?`,
-     F*d/100,'Nm',`Eerst omzetten: ${d} cm = ${f(d/100)} m<br>M = F · d = ${F} N · ${f(d/100)} m = ${f(F*d/100)} Nm`); },
+   return num(`Je draait een moer vast met een moersleutel. Je duwt loodrecht op de sleutel. Hoe groot is het moment op de moer?`,
+     F*d/100,'Nm',`Eerst omzetten: ${d} cm = ${f(d/100)} m<br>M = F · d = ${F} N · ${f(d/100)} m = ${f(F*d/100)} Nm`, null,
+     [`kracht F = ${F} N`,`afstand hand ↔ midden van de moer = ${d} cm`], 'moment M (in <b>Nm</b>)<br><span class="tip">Let op: zet cm eerst om naar m.</span>'); },
  ()=>mc('In welke eenheid druk je het moment van een kracht uit?', 'Nm (newtonmeter)', ['N/m (newton per meter)','N (newton)','kg · m/s²'],
    'M = F · d: newton maal meter geeft newtonmeter (Nm).'),
  ()=>mc('Wanneer is het moment van een kracht t.o.v. een punt O gelijk aan nul?', 'Als de werklijn van de kracht door O gaat',
    ['Als de kracht loodrecht op de arm staat','Als de kracht naar beneden gericht is','Als het aangrijpingspunt ver van O ligt'],
    'Gaat de werklijn door O, dan is de arm d = 0 en dus M = F · 0 = 0. De kracht doet dan niet draaien rond O.'),
  ()=>{ const l=pick([0.3,0.4,0.5,0.6,0.8,1]), F=rnd(50,300,10), al=pick([30,40,45,50,60,120,135,150]), M=F*l*Math.sin(rad(al));
-   return num(`Op het uiteinde van een staaf met lengte ${f(l)} m (draaipunt O aan het andere uiteinde) werkt een kracht F = ${F} N. De kracht maakt een hoek van ${al}° met de staaf. Bereken het moment van F t.o.v. O.`,
-     M,'Nm',`Alleen de component loodrecht op de staaf doet draaien: F⊥ = F · sin α = ${F} · sin ${al}° = ${f(F*Math.sin(rad(al)))} N<br>M = F⊥ · l = ${f(F*Math.sin(rad(al)))} · ${f(l)} = ${f(M)} Nm<br>(of: arm d = l · sin α = ${f(l*Math.sin(rad(al)),3)} m)`, figLever(al,f(l)+' m','F')); },
+   return num(`Een staaf draait rond punt O. Op het andere uiteinde trekt een <b>schuine</b> kracht F (zie tekening). Hoe groot is het moment van F rond O?`,
+     M,'Nm',`Alleen de component loodrecht op de staaf doet draaien: F⊥ = F · sin α = ${F} · sin ${al}° = ${f(F*Math.sin(rad(al)))} N<br>M = F⊥ · l = ${f(F*Math.sin(rad(al)))} · ${f(l)} = ${f(M)} Nm<br>(of: arm d = l · sin α = ${f(l*Math.sin(rad(al)),3)} m)`, figLever(al,f(l)+' m','F'),
+     [`F = ${F} N`,`lengte staaf l = ${f(l)} m`,`hoek tussen F en de staaf: α = ${al}°`], 'moment M (in Nm)<br><span class="tip">Alleen het deel van F loodrecht op de staaf doet draaien: F · sin α.</span>', true); },
  ()=>{ const F1=rnd(100,600,20), a1=pick([0.2,0.25,0.3,0.4,0.5]), a2=pick([0.8,1,1.2,1.5,2]), F2=F1*a1/a2, L=a1+a2;
-   return num(`Een hefboom is in evenwicht. Links van het draaipunt werkt een last F₁ = ${F1} N op ${f(a1)} m van het draaipunt. Rechts werkt een kracht F₂ op ${f(a2)} m van het draaipunt. Beide krachten staan loodrecht op de hefboom. Bereken F₂.`,
+   return num(`Een wip (hefboom) is in evenwicht: hij draait niet. Links hangt een last F₁, rechts duwt een kracht F₂ (zie tekening). Hoe groot moet F₂ zijn?`,
      F2,'N',`Evenwicht: moment linksom = moment rechtsom<br>F₁ · a₁ = F₂ · a₂ ⇒ F₂ = ${F1} · ${f(a1)} / ${f(a2)} = ${f(F2)} N`,
-     figBeam(L,[{x:0,dir:'down',lab:'F₁ = '+F1+' N',col:'var(--f1)'},{x:L,dir:'down',lab:'F₂ = ?',col:'var(--f2)'}],[[0,a1,f(a1)+' m',0],[a1,L,f(a2)+' m',0]],a1)); },
+     figBeam(L,[{x:0,dir:'down',lab:'F₁ = '+F1+' N',col:'var(--f1)'},{x:L,dir:'down',lab:'F₂ = ?',col:'var(--f2)'}],[[0,a1,f(a1)+' m',0],[a1,L,f(a2)+' m',0]],a1),
+     [`F₁ = ${F1} N op ${f(a1)} m van het draaipunt`,`F₂ werkt op ${f(a2)} m van het draaipunt`,`beide krachten loodrecht op de hefboom`], 'kracht F₂ (in N)<br><span class="tip">Evenwicht: F₁ · a₁ = F₂ · a₂</span>'); },
  ()=>{ const n=pick([2,3]), xs=shuffle([0,0.5,1,1.5,2,2.5,3,3.5,4]).slice(0,n).sort((p,q)=>p-q), Fs=xs.map(()=>rnd(100,800,50));
    const sF=Fs.reduce((s,v)=>s+v,0), sM=Fs.reduce((s,v,i)=>s+v*xs[i],0), xR=sM/sF, L=Math.max(4,xs[n-1]);
    const names=['F₁','F₂','F₃'], cols=['var(--f1)','var(--f2)','var(--f3)'];
-   return num(`Op een balk werken ${n} evenwijdige krachten naar beneden: ${xs.map((x,i)=>`${names[i]} = ${Fs[i]} N op ${f(x)} m van punt A`).join(', ')}. Bepaal analytisch (stelling van Varignon) op welke afstand van A de resultante ligt.`,
+   return num(`Op een balk werken ${n} krachten naar beneden. Je wil weten waar hun resultante R werkt. Op welke afstand van punt A (linkeruiteinde) ligt R? Gebruik de stelling van Varignon.`,
      xR,'m',`R = ${Fs.join(' + ')} = ${sF} N<br>Varignon t.o.v. A: R · x = ${Fs.map((F,i)=>F+' · '+f(xs[i])).join(' + ')} = ${f(sM)} Nm<br>x = ${f(sM)} / ${sF} = ${f(xR)} m`,
-     figBeam(L,xs.map((x,i)=>({x,dir:'down',lab:names[i],col:cols[i]})),[[0,L,'A ← '+f(L)+' m →',0]])); },
+     figBeam(L,xs.map((x,i)=>({x,dir:'down',lab:names[i],col:cols[i]})),[[0,L,'A ← '+f(L)+' m →',0]]),
+     xs.map((x,i)=>`${names[i]} = ${Fs[i]} N op ${f(x)} m van A`), 'afstand x van R tot A (in m)<br><span class="tip">R = som van de krachten. R · x = som van (kracht · afstand tot A).</span>'); },
  ()=>mc('Wat zegt de <b>stelling van Varignon</b>?',
    'Het moment van de resultante t.o.v. een punt is gelijk aan de algebraïsche som van de momenten van de componenten t.o.v. datzelfde punt',
    ['De resultante van twee krachten is gelijk aan de som van hun grootten','Het moment van een kracht is altijd gelijk aan kracht maal lengte van de staaf','De som van de momenten van alle krachten is altijd nul'],
    'Varignon: M(R) = M(F₁) + M(F₂) + … t.o.v. hetzelfde punt. Zo kan je de ligging van de resultante analytisch bepalen.'),
  ()=>{ const M=rnd(20,120,5), d=rnd(15,40,5);
-   return num(`Een bout moet aangespannen worden met een moment van ${M} Nm. De sleutel is ${d} cm lang en je duwt loodrecht op het uiteinde. Hoe groot moet de kracht zijn?`,
-     M/(d/100),'N',`d = ${d} cm = ${f(d/100)} m<br>F = M / d = ${M} / ${f(d/100)} = ${f(M/(d/100))} N`); },
+   return num(`Een bout moet met een bepaald moment vastgedraaid worden. Je duwt loodrecht op het uiteinde van de sleutel. Hoeveel kracht moet je zetten?`,
+     M/(d/100),'N',`d = ${d} cm = ${f(d/100)} m<br>Uit M = F · d volgt F = M / d = ${M} / ${f(d/100)} = ${f(M/(d/100))} N`, null,
+     [`gevraagd moment M = ${M} Nm`,`lengte sleutel d = ${d} cm`], 'kracht F (in N)<br><span class="tip">Let op: zet cm eerst om naar m.</span>'); },
  ()=>mc('Een moer zit erg vast. Hoe kan je met <b>minder kracht</b> hetzelfde moment krijgen?',
    'Een langere sleutel gebruiken en loodrecht duwen', ['Een kortere sleutel gebruiken','Schuin langs de sleutel duwen','Dichter bij de moer duwen'],
    'M = F · d: met een grotere arm d heb je een kleinere kracht F nodig. Loodrecht duwen geeft de grootste arm.'),
@@ -382,12 +415,12 @@ function renderQuestion(){
   const answered=S.answers.filter(x=>x!=null&&x!=='').length;
   let body='';
   if(q.type==='mc') body=`<div class="choices">${q.choices.map((c,k)=>`<button class="choice ${a===k?'sel':''}" data-k="${k}"><span class="k">${'ABCD'[k]}</span><span>${c}</span></button>`).join('')}</div>`;
-  else body=`<div class="numrow"><input inputmode="decimal" id="inp" placeholder="antwoord" value="${a!=null?esc(a):''}" autocomplete="off"><b>${q.unit}</b></div>`;
+  else body=`<div class="numrow"><input inputmode="decimal" id="inp" placeholder="antwoord" value="${a!=null?esc(a):''}" autocomplete="off"><b>${q.unit}</b></div><div class="hint">Typ alleen het getal, de eenheid staat er al. Rond af op 2 cijfers na de komma.</div>`;
   app.innerHTML=`<div class="bar"><i style="width:${answered/n*100}%"></i></div>
    <div class="card">
     <span class="tag">${TOPICS[q.topic]}</span>
     <div class="muted small">Vraag ${i+1} van ${n}</div>
-    <div class="qtext">${q.text}</div>${q.svg||''}${body}
+    <div class="qtext">${q.text}</div>${q.svg||''}${q.gg||''}${body}
     <div class="row"><button id="prev" ${i===0?'disabled':''}>← Vorige</button>
       ${i<n-1?`<button class="pri" id="next">Volgende →</button>`:`<button class="pri" id="done">Indienen</button>`}</div>
     <div class="dots">${S.questions.map((_,k)=>`<button data-go="${k}" class="${S.answers[k]!=null&&S.answers[k]!==''?'ans':''} ${k===i?'cur':''}">${k+1}</button>`).join('')}</div>
@@ -434,7 +467,7 @@ function renderReview(){
    S.questions.map((q,i)=>{ const ok=isCorrect(q,S.answers[i]);
      return `<div class="card rev ${ok?'ok':'bad'}"><span class="tag">${TOPICS[q.topic]}</span>
        <div class="verd">Vraag ${i+1} · ${ok?'✓ Juist':'✗ Fout'}</div>
-       <div class="qtext">${q.text}</div>${q.svg||''}
+       <div class="qtext">${q.text}</div>${q.svg||''}${q.gg||''}
        <div class="ans mine"><b>Jouw antwoord:</b> ${fmtAnswer(q,S.answers[i])}</div>
        ${ok?'':`<div class="ans right"><b>Juist antwoord:</b> ${fmtCorrect(q)}</div>`}
        <div class="uitleg">${q.uitleg}</div></div>`; }).join('')+
